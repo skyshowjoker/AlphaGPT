@@ -5,8 +5,8 @@ from data_service import DashboardService
 from visualizer import plot_pnl_distribution, plot_market_scatter
 
 st.set_page_config(
-    page_title="MemeAlpha Commander",
-    page_icon="🐕",
+    page_title="AlphaGPT A股策略",
+    page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -29,23 +29,23 @@ def get_service():
 
 svc = get_service()
 
-st.sidebar.title("MemeAlpha Bot")
+st.sidebar.title("AlphaGPT A股策略")
 st.sidebar.markdown("---")
 
 with st.sidebar:
-    st.subheader("Wallet Status")
+    st.subheader("账户状态")
     bal = svc.get_wallet_balance()
-    st.metric("SOL Balance", f"{bal:.4f} SOL")
+    st.metric("账户余额", f"{bal:.2f} 元")
     
     st.markdown("---")
-    st.subheader("Control Panel")
-    if st.button("Refresh Data"):
+    st.subheader("控制面板")
+    if st.button("刷新数据"):
         st.rerun()
         
-    if st.button("EMERGENCY STOP", type="primary"):
+    if st.button("紧急停止", type="primary"):
         with open("STOP_SIGNAL", "w") as f:
             f.write("STOP")
-        st.error("STOP SIGNAL SENT, Process will terminate on next cycle.")
+        st.error("已发送停止信号，程序将在下一个周期终止。")
 
 col1, col2, col3, col4 = st.columns(4)
 portfolio_df = svc.load_portfolio()
@@ -56,23 +56,23 @@ open_positions = len(portfolio_df)
 total_invested = portfolio_df['initial_cost_sol'].sum() if not portfolio_df.empty else 0.0
 
 with col1:
-    st.metric("Open Positions", f"{open_positions} / 5")
+    st.metric("持仓数量", f"{open_positions} / 5")
 with col2:
-    st.metric("Total Invested", f"{total_invested:.2f} SOL")
+    st.metric("总投资额", f"{total_invested:.2f} 元")
 with col3:
     if not portfolio_df.empty:
         current_val = (portfolio_df['amount_held'] * portfolio_df['highest_price']).sum()
-        pnl_sol = current_val - total_invested
-        st.metric("Unrealized PnL (Est)", f"{pnl_sol:+.3f} SOL", delta_color="normal")
+        pnl_cny = current_val - total_invested
+        st.metric("未实现盈亏(估算)", f"{pnl_cny:+.2f} 元", delta_color="normal")
     else:
-        st.metric("Unrealized PnL", "0.00 SOL")
+        st.metric("未实现盈亏", "0.00 元")
 with col4:
-    st.metric("Active Strategy", "AlphaGPT-v1", help=str(strategy_data))
+    st.metric("当前策略", "AlphaGPT-A股", help=str(strategy_data))
 
-tab1, tab2, tab3 = st.tabs(["Portfolio", "Market Scanner", "Logs"])
+tab1, tab2, tab3 = st.tabs(["当前持仓", "市场扫描", "系统日志"])
 
 with tab1:
-    st.subheader("Active Holdings")
+    st.subheader("当前持仓")
     if not portfolio_df.empty:
         # Display Table
         display_cols = ['symbol', 'entry_price', 'highest_price', 'amount_held', 'pnl_pct', 'is_moonbag']
@@ -80,32 +80,33 @@ with tab1:
         # Format for display
         show_df = portfolio_df[display_cols].copy()
         show_df['pnl_pct'] = show_df['pnl_pct'].apply(lambda x: f"{x:.2%}")
-        show_df['entry_price'] = show_df['entry_price'].apply(lambda x: f"{x:.6f}")
+        show_df['entry_price'] = show_df['entry_price'].apply(lambda x: f"{x:.2f}")
+        show_df['highest_price'] = show_df['highest_price'].apply(lambda x: f"{x:.2f}")
         
         st.dataframe(show_df, use_container_width=True, hide_index=True)
         
         # Display Chart
         st.plotly_chart(plot_pnl_distribution(portfolio_df), use_container_width=True)
     else:
-        st.info("No active positions. The bot is scanning...")
+        st.info("当前无持仓，策略正在扫描...")
 
 with tab2:
-    st.subheader("Top Opportunities (DB Snapshot)")
+    st.subheader("市场扫描结果")
     if not market_df.empty:
         st.plotly_chart(plot_market_scatter(market_df), use_container_width=True)
         st.dataframe(market_df, use_container_width=True)
     else:
-        st.warning("No market data found in DB. Is the Data Pipeline running?")
+        st.warning("数据库中未找到市场数据，数据管道是否正在运行？")
 
 with tab3:
-    st.subheader("System Logs (Tail 20)")
+    st.subheader("系统日志 (最近20条)")
     logs = svc.get_recent_logs(20)
     if logs:
         st.code("".join(logs), language="text")
     else:
-        st.caption("No logs found or log file path incorrect.")
+        st.caption("未找到日志或日志文件路径不正确。")
 
 time.sleep(1) 
-if st.checkbox("Auto-Refresh (30s)", value=True):
+if st.checkbox("自动刷新 (30秒)", value=True):
     time.sleep(30)
     st.rerun()

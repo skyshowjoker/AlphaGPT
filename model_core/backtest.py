@@ -2,9 +2,9 @@ import torch
 
 class MemeBacktest:
     def __init__(self):
-        self.trade_size = 1000.0
-        self.min_liq = 500000.0
-        self.base_fee = 0.0060
+        self.trade_size = 10000.0  # A 股交易规模较大
+        self.min_liq = 10000000.0  # A 股流动性阈值
+        self.base_fee = 0.0003  # A 股交易费率较低
 
     def evaluate(self, factors, raw_data, target_ret):
         liquidity = raw_data['liquidity']

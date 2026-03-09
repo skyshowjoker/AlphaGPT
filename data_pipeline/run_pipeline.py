@@ -4,9 +4,15 @@ from .data_manager import DataManager
 from .config import Config
 
 async def main():
-    if not Config.BIRDEYE_API_KEY:
-        logger.error("BIRDEYE_API_KEY is missing in .env")
-        return
+    # 根据配置检查相应的 API 密钥
+    if Config.USE_TUSHARE:
+        if not Config.TUSHARE_TOKEN:
+            logger.error("TUSHARE_TOKEN is missing in .env")
+            return
+    else:
+        if not Config.BIRDEYE_API_KEY:
+            logger.error("BIRDEYE_API_KEY is missing in .env")
+            return
 
     manager = DataManager()
     

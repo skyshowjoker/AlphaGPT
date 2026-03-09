@@ -4,7 +4,7 @@ from .factors import FeatureEngineer
 
 class StackVM:
     def __init__(self):
-        self.feat_offset = FeatureEngineer.INPUT_DIM
+        self.feat_offset = 12  # 使用 AdvancedFactorEngineer 后的特征维度
         self.op_map = {i + self.feat_offset: cfg[1] for i, cfg in enumerate(OPS_CONFIG)}
         self.arity_map = {i + self.feat_offset: cfg[2] for i, cfg in enumerate(OPS_CONFIG)}
 

@@ -4,7 +4,7 @@ from tqdm import tqdm
 import json
 
 from .config import ModelConfig
-from .data_loader import CryptoDataLoader
+from .a_stock_data_loader import AStockDataLoader
 from .alphagpt import AlphaGPT, NewtonSchulzLowRankDecay, StableRankMonitor
 from .vm import StackVM
 from .backtest import MemeBacktest
@@ -19,13 +19,14 @@ class AlphaEngine:
             lord_decay_rate: Strength of LoRD regularization
             lord_num_iterations: Number of Newton-Schulz iterations per step
         """
-        self.loader = CryptoDataLoader()
-        self.loader.load_data()
+        self.loader = AStockDataLoader(ModelConfig.DB_URL)
+        import asyncio
+        asyncio.run(self.loader.load_data())
         
         self.model = AlphaGPT().to(ModelConfig.DEVICE)
         
-        # Standard optimizer
-        self.opt = torch.optim.AdamW(self.model.parameters(), lr=1e-3)
+        # Standard optimizer with optimized learning rate
+        self.opt = torch.optim.AdamW(self.model.parameters(), lr=5e-4)  # 降低学习率以获得更好的收敛
         
         # Low-Rank Decay regularizer
         self.use_lord = use_lord_regularization
